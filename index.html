@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Книга — Эксперт по оцифровке бизнеса</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a2e;
+  }
+
+  /* ========== КАРТОЧКА ========== */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #2E5077;
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* ========== ФОРМА ========== */
+  .field {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+  }
+
+  input[type="email"],
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e0e4ea;
+    border-radius: 10px;
+    font-size: 16px;
+    color: #1a1a2e;
+    outline: none;
+    transition: border-color .2s;
+    background: #fafbfc;
+  }
+
+  input:focus {
+    border-color: #2E5077;
+    background: #fff;
+  }
+
+  input.error {
+    border-color: #C0392B;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 15px;
+    background: #2E5077;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    margin-top: 8px;
+  }
+
+  .btn:hover { background: #244060; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { background: #b0bec5; cursor: default; }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: #2E5077;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 12px;
+    display: inline-block;
+  }
+
+  .error-msg {
+    font-size: 13px;
+    color: #C0392B;
+    margin-top: 8px;
+    display: none;
+    text-align: left;
+  }
+
+  .info-msg {
+    font-size: 13px;
+    color: #2E5077;
+    background: #eef3f9;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 8px;
+    display: none;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  .otp-hint {
+    font-size: 13px;
+    color: #888;
+    margin: 16px 0 0;
+    line-height: 1.5;
+  }
+
+  .otp-hint span {
+    display: block;
+    font-weight: 600;
+    color: #444;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* ========== СПИННЕР ========== */
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e4ea;
+    border-top-color: #2E5077;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ========== ЭКРАН КНИГИ ========== */
+  #screen-book {
+    position: fixed;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    background: #1a1a2e;
+  }
+
+  .book-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #2E5077;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    height: 46px;
+  }
+
+  .book-title { letter-spacing: .03em; }
+
+  .book-logout {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+
+  .book-logout:hover { background: rgba(255,255,255,0.25); }
+
+  .iframe-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .iframe-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* Накладка поверх тулбара Google Drive (верхние ~42px) */
+  .toolbar-cover {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 44px;
+    background: #2E5077;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Накладка правого угла (кнопки «открыть в Drive» и т.п.) */
+  .corner-cover {
+    position: absolute;
+    top: 0; right: 0;
+    width: 160px;
+    height: 60px;
+    background: #2E5077;
+    z-index: 11;
+    pointer-events: none;
+  }
+
+  /* ========== СОСТОЯНИЯ ========== */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  #screen-loading { text-align: center; padding: 20px 0; }
+  #screen-loading p { color: #666; font-size: 14px; margin-top: 12px; }
+
+  #screen-denied .icon { font-size: 40px; margin-bottom: 12px; }
+  #screen-denied h1 { font-size: 20px; margin-bottom: 8px; }
+
+  #screen-success .icon { font-size: 40px; margin-bottom: 12px; }
+  #screen-success h1 { font-size: 20px; margin-bottom: 8px; }
+  #screen-success p { color: #555; font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ====== ОСНОВНАЯ КАРТОЧКА ====== -->
+<div class="card" id="main-card">
+
+  <div class="logo">Екатерина Яхонтова</div>
+
+  <!-- Экран: загрузка -->
+  <div class="screen" id="screen-loading">
+    <div class="spinner"></div>
+    <p>Проверяем доступ…</p>
+  </div>
+
+  <!-- Экран: ввод email -->
+  <div class="screen" id="screen-email">
+    <h1>Доступ к книге</h1>
+    <p class="subtitle">Введите email, который вы использовали при покупке. Мы отправим вам одноразовый код.</p>
+
+    <div class="field">
+      <label for="emailInput">Email покупателя</label>
+      <input type="email" id="emailInput" placeholder="example@mail.ru" autocomplete="email">
+      <div class="error-msg" id="emailError"></div>
+      <div class="info-msg" id="emailInfo"></div>
+    </div>
+
+    <button class="btn" id="btnSendOtp" onclick="sendOtp()">Получить код</button>
+  </div>
+
+  <!-- Экран: ввод OTP -->
+  <div class="screen" id="screen-otp">
+    <h1>Введите код</h1>
+    <p class="subtitle" id="otpSubtitle">Мы отправили 6-значный код на ваш email.</p>
+
+    <div class="field">
+      <label for="otpInput">Код из письма</label>
+      <input type="text" id="otpInput" placeholder="000000" maxlength="6"
+             inputmode="numeric" pattern="\d{6}" autocomplete="one-time-code">
+      <div class="error-msg" id="otpError"></div>
+    </div>
+
+    <button class="btn" id="btnVerifyOtp" onclick="verifyOtp()">Войти в читалку</button>
+
+    <div class="otp-hint">
+      <span>Не пришло письмо?</span>
+      Проверьте папку «Спам». Если письма нет —
+      <button class="btn-link" onclick="backToEmail()">вернуться и отправить снова</button>
+    </div>
+  </div>
+
+  <!-- Экран: доступ закрыт -->
+  <div class="screen" id="screen-denied">
+    <div class="icon">🔒</div>
+    <h1>Доступ не найден</h1>
+    <p class="subtitle" id="deniedText">Email не найден среди покупателей. Если вы приобрели книгу — напишите нам.</p>
+    <button class="btn" onclick="backToEmail()" style="margin-top:8px">Попробовать другой email</button>
+  </div>
+
+  <!-- Экран: успех (переходная) -->
+  <div class="screen" id="screen-success">
+    <div class="icon">✅</div>
+    <h1>Добро пожаловать!</h1>
+    <p>Открываем книгу…</p>
+  </div>
+
+</div>
+
+<!-- ====== ЭКРАН КНИГИ (полноэкранный) ====== -->
+<div id="screen-book">
+  <div class="book-header">
+    <span class="book-title">📖 Эксперт по оцифровке бизнеса</span>
+    <button class="book-logout" onclick="logout()">Выйти</button>
+  </div>
+  <div class="iframe-wrap">
+    <div class="toolbar-cover"></div>
+    <div class="corner-cover"></div>
+    <iframe
+      id="bookFrame"
+      src=""
+      sandbox="allow-scripts allow-same-origin allow-popups"
+      allow="fullscreen"
+    ></iframe>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  КОНФИГУРАЦИЯ — вставьте URL вашего Apps Script
+// ============================================================
+const CONFIG = {
+  appsScriptUrl: 'https://script.google.com/macros/s/ВСТАВЬТЕ_ВАШ_URL_ЗДЕСЬ/exec',
+  driveFileId:   '1mFkNrfOM1KknEpW9nIjQuK7JUqQFfA8x',
+  sessionDays:   7,       // сессия хранится N дней
+  sessionKey:    'bk_session',
+};
+
+// ============================================================
+//  ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  showScreen('loading');
+  checkExistingSession();
+});
+
+function checkExistingSession() {
+  try {
+    const raw = localStorage.getItem(CONFIG.sessionKey);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s.expiry > Date.now()) {
+        openBook(s.email);
+        return;
+      } else {
+        localStorage.removeItem(CONFIG.sessionKey);
+      }
+    }
+  } catch(e) { /* ignore */ }
+  showScreen('email');
+}
+
+// ============================================================
+//  ШАГ 1 — ОТПРАВКА OTP
+// ============================================================
+let currentEmail = '';
+
+async function sendOtp() {
+  const emailInput = document.getElementById('emailInput');
+  const email = emailInput.value.trim().toLowerCase();
+
+  clearMessages();
+
+  if (!isValidEmail(email)) {
+    showFieldError('emailError', 'Введите корректный email.');
+    emailInput.classList.add('error');
+    return;
+  }
+
+  const btn = document.getElementById('btnSendOtp');
+  btn.disabled = true;
+  btn.textContent = 'Отправляем…';
+
+  try {
+    const resp = await apiFetch({ action: 'request_otp', email });
+
+    if (resp.sent) {
+      currentEmail = email;
+      document.getElementById('otpSubtitle').textContent =
+        `Мы отправили 6-значный код на ${email}`;
+      showScreen('otp');
+    } else {
+      handleRequestOtpError(resp.reason, emailInput);
+    }
+  } catch(e) {
+    showFieldError('emailError', 'Ошибка соединения. Проверьте интернет и попробуйте снова.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Получить код';
+}
+
+function handleRequestOtpError(reason, emailInput) {
+  switch(reason) {
+    case 'not_found':
+      showScreen('denied');
+      document.getElementById('deniedText').textContent =
+        'Email не найден среди покупателей. Если вы приобрели книгу — напишите нам.';
+      break;
+    case 'revoked':
+      showScreen('denied');
+      document.getElementById('deniedText').textContent =
+        'Доступ к книге приостановлен. Пожалуйста, свяжитесь с нами.';
+      break;
+    case 'too_many':
+      showFieldError('emailError', 'Слишком много попыток. Подождите 30 минут и попробуйте снова.');
+      emailInput.classList.add('error');
+      break;
+    default:
+      showFieldError('emailError', 'Не удалось отправить код. Попробуйте ещё раз.');
+  }
+}
+
+// ============================================================
+//  ШАГ 2 — ВЕРИФИКАЦИЯ OTP
+// ============================================================
+async function verifyOtp() {
+  const otpInput = document.getElementById('otpInput');
+  const otp = otpInput.value.trim().replace(/\D/g, '');
+
+  clearMessages();
+
+  if (otp.length !== 6) {
+    showFieldError('otpError', 'Введите 6-значный код из письма.');
+    otpInput.classList.add('error');
+    return;
+  }
+
+  const btn = document.getElementById('btnVerifyOtp');
+  btn.disabled = true;
+  btn.textContent = 'Проверяем…';
+
+  try {
+    const resp = await apiFetch({ action: 'verify_otp', email: currentEmail, otp });
+
+    if (resp.valid) {
+      saveSession(currentEmail);
+      showScreen('success');
+      setTimeout(() => openBook(currentEmail), 1000);
+    } else {
+      handleVerifyOtpError(resp.reason, otpInput);
+    }
+  } catch(e) {
+    showFieldError('otpError', 'Ошибка соединения. Проверьте интернет и попробуйте снова.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Войти в читалку';
+}
+
+function handleVerifyOtpError(reason, otpInput) {
+  switch(reason) {
+    case 'wrong_code':
+      showFieldError('otpError', 'Неверный код. Проверьте письмо и попробуйте снова.');
+      otpInput.classList.add('error');
+      break;
+    case 'expired':
+      showFieldError('otpError', 'Код истёк. Вернитесь и запросите новый.');
+      otpInput.classList.add('error');
+      break;
+    case 'already_used':
+      showFieldError('otpError', 'Этот код уже был использован. Запросите новый.');
+      otpInput.classList.add('error');
+      break;
+    case 'too_many':
+      showScreen('denied');
+      document.getElementById('deniedText').textContent =
+        'Слишком много неверных попыток. Подождите 30 минут.';
+      break;
+    default:
+      showFieldError('otpError', 'Ошибка проверки кода. Попробуйте ещё раз.');
+  }
+}
+
+// ============================================================
+//  СЕССИЯ + КНИГА
+// ============================================================
+function saveSession(email) {
+  const expiry = Date.now() + CONFIG.sessionDays * 24 * 60 * 60 * 1000;
+  localStorage.setItem(CONFIG.sessionKey, JSON.stringify({ email, expiry }));
+}
+
+function openBook(email) {
+  // Показываем полноэкранный вьюер
+  document.getElementById('main-card').style.display = 'none';
+  document.body.style.background = '#1a1a2e';
+
+  const bookScreen = document.getElementById('screen-book');
+  bookScreen.style.display = 'flex';
+
+  // Загружаем iframe (только после подтверждения доступа)
+  const src = `https://drive.google.com/file/d/${CONFIG.driveFileId}/preview#toolbar=0`;
+  document.getElementById('bookFrame').src = src;
+
+  installProtections();
+}
+
+function logout() {
+  localStorage.removeItem(CONFIG.sessionKey);
+  location.reload();
+}
+
+// ============================================================
+//  ЗАЩИТА ОТ СКАЧИВАНИЯ
+// ============================================================
+function installProtections() {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  document.addEventListener('keydown', function(e) {
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (
+      (ctrl && ['s','p','u','a','c'].includes(e.key.toLowerCase())) ||
+      e.key === 'F12' ||
+      e.key === 'PrintScreen'
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  document.addEventListener('dragstart', e => e.preventDefault());
+}
+
+// ============================================================
+//  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================================
+async function apiFetch(params) {
+  const url = new URL(CONFIG.appsScriptUrl);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const resp = await fetch(url.toString(), { redirect: 'follow' });
+  return resp.json();
+}
+
+function showScreen(name) {
+  const screens = ['loading','email','otp','denied','success'];
+  screens.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.remove('active');
+  });
+  const target = document.getElementById('screen-' + name);
+  if (target) target.classList.add('active');
+}
+
+function clearMessages() {
+  ['emailError','emailInfo','otpError'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  });
+  ['emailInput','otpInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('error');
+  });
+}
+
+function showFieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function backToEmail() {
+  clearMessages();
+  showScreen('email');
+}
+
+// Отправить OTP по нажатию Enter
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.screen.active');
+    if (active && active.id === 'screen-email') sendOtp();
+    if (active && active.id === 'screen-otp') verifyOtp();
+  }
+});
+</script>
+</body>
+</html>
