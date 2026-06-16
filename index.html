@@ -621,26 +621,39 @@ function installProtections() {
 // ============================================================
 //  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ============================================================
-// Сначала пробуем fetch(), если блокируется — JSONP
+// Три уровня: прямой fetch → прокси → JSONP
 async function apiFetch(params) {
   const url = new URL(CONFIG.appsScriptUrl);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const directUrl = url.toString();
 
-  // 1. Пробуем fetch (работает в большинстве браузеров)
+  // Парсим текст ответа (может быть JSON или JSONP вида cb({...}))
+  function parseResponse(text) {
+    const m = text.match(/\{[\s\S]*\}/);
+    return JSON.parse(m ? m[0] : text);
+  }
+
+  // 1. Прямой fetch (Chrome, Safari, Firefox)
   try {
     const res = await Promise.race([
-      fetch(url.toString(), { redirect: 'follow' }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
+      fetch(directUrl, { redirect: 'follow' }),
+      new Promise((_, r) => setTimeout(() => r(new Error('to')), 8000))
     ]);
-    const text = await res.text();
-    // Ответ может быть JSON или JSONP-обёрткой вида callback({...})
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    return JSON.parse(text);
-  } catch (fetchErr) {
-    // 2. Запасной вариант: JSONP (для Яндекс Браузера и др.)
-    return jsonpFetch(params);
-  }
+    return parseResponse(await res.text());
+  } catch (_) {}
+
+  // 2. Через CORS-прокси (Яндекс Браузер, Opera Mini и др.)
+  try {
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(directUrl);
+    const res = await Promise.race([
+      fetch(proxyUrl),
+      new Promise((_, r) => setTimeout(() => r(new Error('to')), 10000))
+    ]);
+    return parseResponse(await res.text());
+  } catch (_) {}
+
+  // 3. JSONP (последний резерв)
+  return jsonpFetch(params);
 }
 
 function jsonpFetch(params) {
