@@ -225,6 +225,52 @@
     pointer-events: none;
   }
 
+  /* ========== ПЛАВАЮЩИЕ КНОПКИ БИБЛИОТЕКИ ========== */
+  .side-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 40px;
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  .side-panel.visible { display: flex; }
+
+  .side-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    text-align: right;
+    margin-bottom: 2px;
+  }
+
+  .side-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform .15s, opacity .15s;
+  }
+
+  .side-btn:hover { transform: translateX(-3px); opacity: .92; }
+
+  .side-btn.tg  { background: #229ED9; }
+  .side-btn.max { background: #6B4FBB; }
+
+  .side-btn svg { flex-shrink: 0; }
+
   /* Накладка правого угла (кнопки «открыть в Drive» и т.п.) */
   .corner-cover {
     position: absolute;
@@ -317,6 +363,26 @@
 
 </div>
 
+<!-- ====== ПЛАВАЮЩИЕ КНОПКИ БИБЛИОТЕКИ ====== -->
+<div class="side-panel" id="sidePanel">
+  <div class="side-label">Материалы к книге</div>
+
+  <a class="side-btn tg" href="https://t.me/finansist_kniga_bot" target="_blank" rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.93 6.858l-1.68 7.922c-.126.56-.455.697-.921.433l-2.548-1.877-1.23 1.183c-.136.136-.25.25-.512.25l.183-2.596 4.72-4.264c.205-.183-.045-.284-.318-.101L7.99 14.697l-2.51-.784c-.546-.17-.557-.546.114-.808l9.805-3.781c.455-.17.854.101.531.534z" fill="white"/>
+    </svg>
+    Telegram-бот
+  </a>
+
+  <a class="side-btn max" href="https://max.ru/id025803729988_1_bot" target="_blank" rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="white" fill-opacity="0.2"/>
+      <path d="M7 8h10M7 12h7M7 16h5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    Бот в Max
+  </a>
+</div>
+
 <!-- ====== ЭКРАН КНИГИ (полноэкранный) ====== -->
 <div id="screen-book">
   <div class="book-header">
@@ -351,6 +417,14 @@ const CONFIG = {
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   showScreen('loading');
+
+  // Предзаполняем email из URL-параметра ?email=xxx
+  const urlEmail = new URLSearchParams(window.location.search).get('email');
+  if (urlEmail) {
+    const input = document.getElementById('emailInput');
+    if (input) input.value = decodeURIComponent(urlEmail);
+  }
+
   checkExistingSession();
 });
 
@@ -511,6 +585,9 @@ function openBook(email) {
   // Загружаем iframe (только после подтверждения доступа)
   const src = `https://drive.google.com/file/d/${CONFIG.driveFileId}/preview#toolbar=0`;
   document.getElementById('bookFrame').src = src;
+
+  // Показываем плавающие кнопки библиотеки
+  document.getElementById('sidePanel').classList.add('visible');
 
   installProtections();
 }
