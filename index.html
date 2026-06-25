@@ -295,6 +295,162 @@
   #screen-success .icon { font-size: 40px; margin-bottom: 12px; }
   #screen-success h1 { font-size: 20px; margin-bottom: 8px; }
   #screen-success p { color: #555; font-size: 14px; line-height: 1.6; }
+
+  /* ========== ПАНЕЛЬ ЗАМЕТОК ========== */
+  #notes-panel {
+    position: fixed;
+    top: 46px;
+    right: -360px;
+    width: 340px;
+    bottom: 0;
+    background: #1e2d45;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    transition: right .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.4);
+  }
+
+  #notes-panel.open { right: 0; }
+
+  .notes-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #162234;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+
+  .notes-head-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .notes-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color .15s;
+  }
+  .notes-close:hover { color: #fff; }
+
+  .notes-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    padding: 8px 16px 4px;
+    flex-shrink: 0;
+  }
+
+  #notesArea {
+    flex: 1;
+    background: #1e2d45;
+    color: #e8edf3;
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    font-family: inherit;
+  }
+
+  #notesArea::placeholder { color: rgba(255,255,255,0.25); }
+
+  .notes-status {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    padding: 4px 16px;
+    flex-shrink: 0;
+    min-height: 18px;
+  }
+
+  .notes-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+
+  .notes-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .notes-btn:hover { opacity: .85; }
+  .notes-btn:disabled { opacity: .4; cursor: default; }
+
+  .notes-btn-clear {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6);
+  }
+
+  .notes-btn-pdf {
+    background: #C0392B;
+    color: #fff;
+  }
+
+  .notes-btn-word {
+    background: #2E5077;
+    color: #fff;
+  }
+
+  /* Кнопка-тоггл заметок в шапке */
+  .notes-toggle {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .2s;
+    margin-right: 8px;
+  }
+  .notes-toggle:hover  { background: rgba(255,255,255,0.25); }
+  .notes-toggle.active { background: rgba(255,215,0,0.25); color: #FFD700; }
+
+  /* Сдвигаем iframe-wrap когда панель открыта */
+  #screen-book.notes-open .iframe-wrap {
+    margin-right: 340px;
+    transition: margin-right .3s cubic-bezier(.4,0,.2,1);
+  }
+  #screen-book .iframe-wrap {
+    transition: margin-right .3s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* Скрываем side-panel когда заметки открыты */
+  #screen-book.notes-open ~ #sidePanel { display: none !important; }
+
+  /* Печать (только заметки) */
+  @media print {
+    body > *:not(#print-notes) { display: none !important; }
+    #print-notes {
+      display: block !important;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #000;
+      padding: 40px;
+      white-space: pre-wrap;
+    }
+  }
 </style>
 </head>
 <body>
@@ -387,7 +543,10 @@
 <div id="screen-book">
   <div class="book-header">
     <span class="book-title">📖 Эксперт по оцифровке бизнеса</span>
-    <button class="book-logout" onclick="logout()">Выйти</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="notes-toggle" id="notesToggle" onclick="toggleNotes()">✏️ Заметки</button>
+      <button class="book-logout" onclick="logout()">Выйти</button>
+    </div>
   </div>
   <div class="iframe-wrap">
     <div class="toolbar-cover"></div>
@@ -400,6 +559,25 @@
     ></iframe>
   </div>
 </div>
+
+<!-- ====== ПАНЕЛЬ ЗАМЕТОК ====== -->
+<div id="notes-panel">
+  <div class="notes-head">
+    <span class="notes-head-title">✏️ Мои заметки</span>
+    <button class="notes-close" onclick="toggleNotes()" title="Закрыть">×</button>
+  </div>
+  <div class="notes-hint">Пишите заметки или вставляйте текст из книги. Сохраняется автоматически.</div>
+  <textarea id="notesArea" placeholder="Начните писать…" oninput="onNotesInput()"></textarea>
+  <div class="notes-status" id="notesStatus"></div>
+  <div class="notes-actions">
+    <button class="notes-btn notes-btn-clear" onclick="clearNotes()">🗑 Очистить</button>
+    <button class="notes-btn notes-btn-pdf" onclick="exportPDF()">📄 PDF</button>
+    <button class="notes-btn notes-btn-word" onclick="exportWord()">📝 Word</button>
+  </div>
+</div>
+
+<!-- Скрытый блок для печати PDF -->
+<div id="print-notes" style="display:none;"></div>
 
 <script>
 // ============================================================
@@ -589,6 +767,9 @@ function openBook(email) {
   // Показываем плавающие кнопки библиотеки
   document.getElementById('sidePanel').classList.add('visible');
 
+  // Загружаем сохранённые заметки
+  loadNotes(email);
+
   installProtections();
 }
 
@@ -598,12 +779,127 @@ function logout() {
 }
 
 // ============================================================
+//  ЗАМЕТКИ
+// ============================================================
+let _notesEmail = '';
+let _saveTimer  = null;
+
+function notesKey(email) {
+  return 'bk_notes_' + (email || 'guest');
+}
+
+function loadNotes(email) {
+  _notesEmail = email;
+  try {
+    const saved = localStorage.getItem(notesKey(email));
+    if (saved) document.getElementById('notesArea').value = saved;
+  } catch(e) {}
+}
+
+function onNotesInput() {
+  clearTimeout(_saveTimer);
+  document.getElementById('notesStatus').textContent = 'Сохраняем…';
+  _saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(notesKey(_notesEmail), document.getElementById('notesArea').value);
+      const now = new Date();
+      const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+      document.getElementById('notesStatus').textContent = 'Сохранено в ' + t;
+    } catch(e) {
+      document.getElementById('notesStatus').textContent = 'Ошибка сохранения';
+    }
+  }, 800);
+}
+
+function toggleNotes() {
+  const panel  = document.getElementById('notes-panel');
+  const book   = document.getElementById('screen-book');
+  const toggle = document.getElementById('notesToggle');
+  const isOpen = panel.classList.contains('open');
+
+  if (isOpen) {
+    panel.classList.remove('open');
+    book.classList.remove('notes-open');
+    toggle.classList.remove('active');
+    toggle.textContent = '✏️ Заметки';
+  } else {
+    panel.classList.add('open');
+    book.classList.add('notes-open');
+    toggle.classList.add('active');
+    toggle.textContent = '✏️ Закрыть';
+    document.getElementById('notesArea').focus();
+  }
+}
+
+function clearNotes() {
+  if (!confirm('Очистить все заметки? Это действие нельзя отменить.')) return;
+  document.getElementById('notesArea').value = '';
+  localStorage.removeItem(notesKey(_notesEmail));
+  document.getElementById('notesStatus').textContent = 'Заметки очищены';
+}
+
+function exportPDF() {
+  const text = document.getElementById('notesArea').value.trim();
+  if (!text) { alert('Заметки пусты.'); return; }
+
+  const printDiv = document.getElementById('print-notes');
+  printDiv.innerHTML =
+    '<h2 style="font-family:Arial;font-size:18px;margin-bottom:16px;color:#2E5077;">' +
+    '📖 Мои заметки — «Эксперт по оцифровке бизнеса»</h2>' +
+    '<p style="font-family:Arial;font-size:13px;color:#888;margin-bottom:24px;">Дата: ' +
+    new Date().toLocaleDateString('ru-RU') + '</p>' +
+    '<div style="white-space:pre-wrap;font-family:Arial;font-size:14px;line-height:1.8;color:#1a1a2e;">' +
+    escapeHtml(text) + '</div>';
+  printDiv.style.display = 'block';
+
+  setTimeout(() => {
+    window.print();
+    printDiv.style.display = 'none';
+  }, 100);
+}
+
+function exportWord() {
+  const text = document.getElementById('notesArea').value.trim();
+  if (!text) { alert('Заметки пусты.'); return; }
+
+  const date = new Date().toLocaleDateString('ru-RU');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{font-family:Arial,sans-serif;font-size:14px;line-height:1.8;color:#000;padding:40px;}
+h1{font-size:18px;color:#2E5077;margin-bottom:8px;}
+.meta{font-size:12px;color:#888;margin-bottom:32px;}
+pre{white-space:pre-wrap;font-family:Arial,sans-serif;font-size:14px;}
+</style></head><body>
+<h1>📖 Мои заметки — «Эксперт по оцифровке бизнеса»</h1>
+<div class="meta">Дата: ${date}</div>
+<pre>${escapeHtml(text)}</pre>
+</body></html>`;
+
+  const blob = new Blob(['﻿' + html], { type: 'application/msword;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'заметки_к_книге.doc';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
 //  ЗАЩИТА ОТ СКАЧИВАНИЯ
 // ============================================================
 function installProtections() {
-  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('contextmenu', function(e) {
+    // Разрешаем правую кнопку в поле заметок
+    if (e.target.id === 'notesArea') return;
+    e.preventDefault();
+  });
 
   document.addEventListener('keydown', function(e) {
+    // Разрешаем Ctrl+A / Ctrl+C в поле заметок
+    if (document.activeElement && document.activeElement.id === 'notesArea') return;
     const ctrl = e.ctrlKey || e.metaKey;
     if (
       (ctrl && ['s','p','u','a','c'].includes(e.key.toLowerCase())) ||
